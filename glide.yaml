@@ -1,0 +1,6 @@
+package: github.com/jim-minter/lbtest
+import:
+- package: github.com/Azure/azure-sdk-for-go
+  version: v24.0.0
+- package: github.com/Azure/go-autorest
+  version: v11.2.7
