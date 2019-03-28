@@ -340,7 +340,6 @@ func (c *client) deploy(ctx context.Context) error {
 		return nil
 	}
 
-	log.Printf("%#v", err)
 	log.Print("deploying")
 
 	_, err = c.groups.CreateOrUpdate(ctx, *resourceGroup, resources.Group{
@@ -370,7 +369,13 @@ func (c *client) deploy(ctx context.Context) error {
 		return err
 	}
 
-	return future.WaitForCompletionRef(ctx, c.deployments.Client)
+	err = future.WaitForCompletionRef(ctx, c.deployments.Client)
+	if err != nil {
+		return err
+	}
+
+	log.Print("done")
+	return nil
 }
 
 func (c *client) getURLs(ctx context.Context) ([]string, error) {
