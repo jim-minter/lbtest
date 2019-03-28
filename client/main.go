@@ -21,6 +21,7 @@ import (
 
 var (
 	resourceGroup = flag.String("resourcegroup", "", "resource group")
+	hostname      = flag.String("hostname", "", "hostname override")
 
 	template = []byte(`{
 	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
@@ -379,8 +380,11 @@ func (c *client) deploy(ctx context.Context) error {
 }
 
 func (c *client) getURLs(ctx context.Context) ([]string, error) {
+	if *hostname == "" {
+		*hostname = *resourceGroup + ".eastus.cloudapp.azure.com"
+	}
 	urls := []string{
-		"https://" + *resourceGroup + ".eastus.cloudapp.azure.com/healthz",
+		"https://" + *hostname + "/healthz",
 	}
 	ips, err := c.publicIPAddresses.ListVirtualMachineScaleSetPublicIPAddressesComplete(ctx, *resourceGroup, "ss-master")
 	if err != nil {
@@ -405,7 +409,7 @@ func monitor(url string) error {
 			},
 			DisableKeepAlives: true,
 		},
-		Timeout: 5 * time.Second,
+		// Timeout: 5 * time.Second,
 	}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -421,6 +425,10 @@ func monitor(url string) error {
 			resp, err := cli.Do(req)
 
 			end := time.Now()
+
+			if err == nil {
+				resp.Body.Close()
+			}
 
 			if err == nil && resp.StatusCode != http.StatusOK {
 				err = fmt.Errorf("invalid status code %d", resp.StatusCode)
